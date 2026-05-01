@@ -174,11 +174,7 @@ def update_invoice_api(invoice_id: int, data: InvoiceUpdate, request: Request, d
         data=to_invoice_response(invoice),
     )
 @api_router.post("/invoices/{invoice_id}/submit")
-def submit_invoice_api(
-    invoice_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-):
+def submit_invoice_api(invoice_id: int, request: Request, db: Session = Depends(get_db)):
     user_id = get_user_id(request)
     invoice = get_invoice_by_id(db, invoice_id)
 
@@ -254,5 +250,26 @@ def download_invoice_api(invoice_id: int, db: Session = Depends(get_db)):
         status="success",
         message="Invoice download URL generated",
         data=data,
+    )
+@api_router.get("/reports/outstanding")
+def get_outstanding_report_api(db: Session = Depends(get_db)):
+    report = get_outstanding_report(db)
+    return APIResponse(
+        status="success",
+        message="Outstanding report retrieved successfully",
+        data={
+            "total_outstanding": report["total_outstanding"],
+            "invoices": [
+                to_invoice_response(invoice) for invoice in report["invoices"]
+            ],
+        },
+    )
+@api_router.get("/reports/billing-history")
+def get_billing_history_report_api(db: Session = Depends(get_db)):
+    invoices = get_billing_history_report(db)
+    return APIResponse(
+        status="success",
+        message="Billing history retrieved successfully",
+        data=[to_invoice_response(invoice) for invoice in invoices],
     )
 app.include_router(api_router)
