@@ -19,7 +19,6 @@ def calculate_invoice_totals(items, adjustment_total=0, credit_total=0):
         "total_amount": total_amount,
     }
 
-
 def create_client(db: Session, data):
     client = models.Client(
         company_name=data.company_name,
@@ -30,14 +29,19 @@ def create_client(db: Session, data):
     db.commit()
     db.refresh(client)
     return client
-# Retrieve all clients
-# Used for listing clients in the system
-def get_clients(db):
-  return db.query(models.Client).all()
 
-# Create a new project under a client
-# Ensures the referenced client exists before creating the project
+def get_clients(db):
+    """
+    Retrieve all clients
+    Used for listing clients in the system
+    """
+    return db.query(models.Client).all()
+
 def create_project(db: Session, data):
+    """
+    Create a new project under a client
+    Ensures the referenced client exists before creating the project
+    """
     # Validate client exists
     client = db.query(models.Client).filter(models.Client.id == data.client_id).first()
     if not client:
@@ -54,26 +58,25 @@ def create_project(db: Session, data):
     db.refresh(project)
     return project
 
-# Retrieve all projects
-# Used for listing projects in the system
 def get_projects(db: Session):
     return db.query(models.Project).all()
 
-# Retrieve a single project by id
-# Raises 404 if the project does not exist
 def get_project_by_id(db: Session, project_id: int):
+    """
+    Retrieve a single project by id
+    Raises 404 if the project does not exist
+    """
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-def create_invoice(db: Session, data):
+def create_invoice(db: Session, data, user_id: int):
     """
     Create a new invoice with items.
     Validates project and client, calculates financial fields,
     and persists invoice and items in a single transaction.
     """
-
     # Validate project exists
     project = db.query(models.Project).filter(models.Project.id == data.project_id).first()
     if not project:
@@ -109,6 +112,7 @@ def create_invoice(db: Session, data):
         adjustment_total=adjustment_total,
         credit_total=credit_total,
         total_amount=totals["total_amount"],
+        created_by=user_id,
     )
     try:
         # Persist invoice first to obtain generated ID
@@ -132,6 +136,21 @@ def create_invoice(db: Session, data):
     except Exception:
         db.rollback()
         raise
+
+# Retrieve all invoices
+def get_invoices(db: Session):
+    return db.query(models.Invoice).all()
+
+def get_invoice_by_id(db: Session, invoice_id: int):
+    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return invoice
+
+def get_pending_approval_invoices(db: Session):
+    return db.query(models.Invoice).filter(
+        models.Invoice.lifecycle_status == "pending_approval"
+    ).all()
 
 def update_invoice(db: Session, invoice_id: int, data):
     """
@@ -197,18 +216,10 @@ def update_invoice(db: Session, invoice_id: int, data):
         db.rollback()
         raise
 
-# Retrieve all invoices
-def get_invoices(db: Session):
-    return db.query(models.Invoice).all()
-
-def get_invoice_by_id(db: Session, invoice_id: int):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
-    return invoice
-
-# Submit invoice for approval
 def submit_invoice(db: Session, invoice_id: int):
+    """
+    Submit invoice for approval
+    """
     invoice = get_invoice_by_id(db, invoice_id)
     if invoice.lifecycle_status != "draft":
         raise HTTPException(
@@ -221,8 +232,10 @@ def submit_invoice(db: Session, invoice_id: int):
     db.refresh(invoice)
     return invoice
 
-# Withdraw invoice back to draft
 def withdraw_invoice(db: Session, invoice_id: int):
+    """
+    Withdraw invoice back to draft
+    """
     invoice = get_invoice_by_id(db, invoice_id)
     if invoice.lifecycle_status != "pending_approval":
         raise HTTPException(
@@ -234,8 +247,10 @@ def withdraw_invoice(db: Session, invoice_id: int):
     db.refresh(invoice)
     return invoice
 
-# Approve a pending invoice
 def approve_invoice(db: Session, invoice_id: int, user_id: int):
+    """
+    Approve a pending invoice
+    """
     invoice = get_invoice_by_id(db, invoice_id)
     if invoice.lifecycle_status != "pending_approval":
         raise HTTPException(
@@ -251,8 +266,10 @@ def approve_invoice(db: Session, invoice_id: int, user_id: int):
     db.refresh(invoice)
     return invoice
 
-# Reject a pending invoice back to draft
 def reject_invoice(db: Session, invoice_id: int, reason: str | None = None):
+    """
+    Reject a pending invoice back to draft
+    """
     invoice = get_invoice_by_id(db, invoice_id)
     if invoice.lifecycle_status != "pending_approval":
         raise HTTPException(
@@ -266,8 +283,10 @@ def reject_invoice(db: Session, invoice_id: int, reason: str | None = None):
     db.refresh(invoice)
     return invoice
 
-# Mark an approved invoice as sent
 def send_invoice(db: Session, invoice_id: int):
+    """
+    Mark an approved invoice as sent
+    """
     invoice = get_invoice_by_id(db, invoice_id)
 
     if invoice.lifecycle_status != "approved":
@@ -281,8 +300,10 @@ def send_invoice(db: Session, invoice_id: int):
     db.refresh(invoice)
     return invoice
 
-# Mark a sent invoice as paid
 def mark_invoice_paid(db: Session, invoice_id: int):
+    """
+    Mark a sent invoice as paid
+    """
     invoice = get_invoice_by_id(db, invoice_id)
     if invoice.lifecycle_status != "sent":
         raise HTTPException(
@@ -299,7 +320,6 @@ def mark_invoice_paid(db: Session, invoice_id: int):
     db.commit()
     db.refresh(invoice)
     return invoice
-
 
 def get_invoice_download_url(db: Session, invoice_id: int):
     invoice = get_invoice_by_id(db, invoice_id)
