@@ -335,3 +335,25 @@ def get_invoice_download_url(db: Session, invoice_id: int):
         # Here we return a mock URL for simplicity.
         "download_url": f"https://storage.example.com/invoices/{invoice.invoice_number}.pdf",
     }
+def get_outstanding_report(db: Session):
+    """
+    Reporting function to get total outstanding amount and list of unpaid invoices
+    """
+    invoices = db.query(models.Invoice).filter(
+        models.Invoice.payment_status == "unpaid"
+    ).all()
+    total_outstanding = sum(invoice.total_amount for invoice in invoices)
+    return {
+        "total_outstanding": total_outstanding,
+        "invoices": invoices,
+    }
+
+def get_billing_history_report(db: Session):
+    """
+    Reporting function to get all invoices sorted by creation date (newest first)
+    Used for billing history report
+    """
+    invoices = db.query(models.Invoice).order_by(
+        models.Invoice.created_at.desc()
+    ).all()
+    return invoices
