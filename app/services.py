@@ -141,6 +141,11 @@ def create_invoice(db: Session, data, user_id: int):
 def get_invoices(db: Session):
     return db.query(models.Invoice).all()
 
+def get_invoice_items(db: Session, invoice_id: int):
+    return db.query(models.InvoiceItem).filter(
+        models.InvoiceItem.invoice_id == invoice_id
+    ).all()
+
 def get_invoice_by_id(db: Session, invoice_id: int):
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:

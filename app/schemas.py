@@ -60,6 +60,12 @@ class InvoiceUpdate(BaseModel):
 class RejectInvoiceRequest(BaseModel):
   reason: Optional[str] = None
 
+class InvoiceItemResponse(BaseModel):
+  id: int
+  description: str
+  quantity: int
+  unit_price: float
+
 class InvoiceResponse(BaseModel):
   id: int
   invoice_number: str
@@ -71,3 +77,4 @@ class InvoiceResponse(BaseModel):
   credit_total: float
   total_amount: float
   created_by: Optional[int] = None
+  items: list[InvoiceItemResponse] = []
