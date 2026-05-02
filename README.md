@@ -1,6 +1,7 @@
 # Invoicing System API
-This project is a lightweight backend service for managing invoices, including creation, approval workflow, and reporting.
-It demonstrates API design, business logic modelling, and access control in a realistic invoicing scenario.
+
+This project is a lightweight backend service for managing invoices, including creation, approval workflows, and reporting.
+It demonstrates core backend capabilities such as API design, business workflow modeling, and system setup.
 ---
 ## Features
 - Client and project management
@@ -13,7 +14,7 @@ It demonstrates API design, business logic modelling, and access control in a re
   - outstanding balances
   - billing history
 - Mock authentication via request headers
----
+
 ## Tech Stack
 - Python
 - FastAPI
@@ -55,39 +56,44 @@ http://localhost:8000/docs
 ---
 ## Mock Authentication
 The project uses request headers to simulate a logged-in user.
-Example staff user:
+Example (staff):
+```http
 X-User-Id: 1
 X-User-Role: staff
-Example manager user:
+```
+Example (manager):
+```http
 X-User-Id: 2
 X-User-Role: manager
-Default values are provided for local testing.
+```
+Default values are provided for easier local testing.
+
 ---
 ## API Overview
-Clients
+### Clients
 * POST /v1/clients – Create a new client
 * GET /v1/clients – List all clients
-Projects
+### Projects
 * POST /v1/projects – Create a new project
 * GET /v1/projects – List all projects
 * GET /v1/projects/{project_id} – Get project details
-Invoices
+### Invoices
 * POST /v1/invoices – Create invoice (draft)
 * GET /v1/invoices – List invoices
 * GET /v1/invoices/{invoice_id} – Get invoice details
 * PATCH /v1/invoices/{invoice_id} – Update invoice (draft only)
-Invoice Workflow
+### Invoice Workflow
 * POST /v1/invoices/{invoice_id}/submit – Submit for approval
 * POST /v1/invoices/{invoice_id}/withdraw – Withdraw to draft
 * POST /v1/invoices/{invoice_id}/approve – Approve (manager only)
 * POST /v1/invoices/{invoice_id}/reject – Reject (manager only)
 * POST /v1/invoices/{invoice_id}/send – Send invoice
 * POST /v1/invoices/{invoice_id}/mark-paid – Mark as paid
-Approval
+### Approval
 * GET /v1/invoices/pending-approval – List invoices pending approval (manager only)
-Utilities
+### Utilities
 * GET /v1/invoices/{invoice_id}/download – Get invoice download URL
-Reports
+### Reports
 * GET /v1/reports/outstanding – Outstanding balances grouped by project
 * GET /v1/reports/billing-history – Billing history
 ---
