@@ -1,7 +1,0 @@
-X-User-Id: 1
-X-User-Role: staff
-
-
-creator: update / submit / withdraw / send / mark-paid
-manager: approve / reject / pending list / send / mark-paid
-staff: can view all, but can only operate own invoices
