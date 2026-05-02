@@ -335,17 +335,42 @@ def get_invoice_download_url(db: Session, invoice_id: int):
         # Here we return a mock URL for simplicity.
         "download_url": f"https://storage.example.com/invoices/{invoice.invoice_number}.pdf",
     }
+
 def get_outstanding_report(db: Session):
     """
-    Reporting function to get total outstanding amount and list of unpaid invoices
+    Reporting function to get total outstanding amounts grouped by project
     """
-    invoices = db.query(models.Invoice).filter(
-        models.Invoice.payment_status == "unpaid"
-    ).all()
-    total_outstanding = sum(invoice.total_amount for invoice in invoices)
+    invoices = db.query(models.Invoice).all()
+    project_map = {}
+    total_outstanding = 0
+
+    for invoice in invoices:
+        outstanding = 0 if invoice.payment_status == "paid" else invoice.total_amount
+        total_outstanding += outstanding
+
+        if invoice.project_id not in project_map:
+            project_map[invoice.project_id] = {
+                "project_id": invoice.project_id,
+                "project_outstanding": 0,
+                "invoices": [],
+            }
+        project_map[invoice.project_id]["project_outstanding"] += outstanding
+        project_map[invoice.project_id]["invoices"].append({
+            "invoice_id": invoice.id,
+            "invoice_number": invoice.invoice_number,
+            "lifecycle_status": invoice.lifecycle_status,
+            "payment_status": invoice.payment_status,
+            "subtotal": invoice.subtotal,
+            "tax_amount": invoice.tax_amount,
+            "adjustment_total": invoice.adjustment_total,
+            "credit_total": invoice.credit_total,
+            "total_amount": invoice.total_amount,
+            "outstanding_amount": outstanding,
+        })
+
     return {
         "total_outstanding": total_outstanding,
-        "invoices": invoices,
+        "projects": list(project_map.values()),
     }
 
 def get_billing_history_report(db: Session):

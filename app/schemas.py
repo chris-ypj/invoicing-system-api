@@ -70,3 +70,4 @@ class InvoiceResponse(BaseModel):
   adjustment_total: float
   credit_total: float
   total_amount: float
+  created_by: Optional[int] = None
