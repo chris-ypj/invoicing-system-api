@@ -182,10 +182,22 @@ def get_pending_approval_api(request: Request, db: Session = Depends(get_db)):
 @api_router.get("/invoices/{invoice_id}")
 def get_invoice_api(invoice_id: int, db: Session = Depends(get_db)):
     invoice = get_invoice_by_id(db, invoice_id)
+    items = get_invoice_items(db, invoice_id)
+    data = to_invoice_response(invoice).model_dump()
+    data["items"] = [
+        {
+            "id": item.id,
+            "description": item.description,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price,
+            "line_total": item.line_total,
+        }
+        for item in items
+    ]
     return APIResponse(
         status="success",
         message="Invoice retrieved successfully",
-        data=to_invoice_response(invoice)
+        data=data,
     )
 @api_router.patch("/invoices/{invoice_id}")
 def update_invoice_api(invoice_id: int, data: InvoiceUpdate, request: Request, db: Session = Depends(get_db)):
