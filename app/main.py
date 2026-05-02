@@ -1,13 +1,40 @@
-from fastapi import FastAPI, Depends, APIRouter
-from requests import Request
-from sqlalchemy.orm import Session
+from fastapi import FastAPI, Depends, APIRouter, Header, HTTPException, Request
 
 from app.database import SessionLocal
 from app.schemas import *
 from app.services import *
 
-
-app = FastAPI()
+def get_current_user(
+  x_user_id: int = Header(default=1),
+  x_user_role: str = Header(default="staff"),
+):
+    """
+    Mock authentication using request headers.
+    This project does not implement a full authentication system (e.g. JWT),
+    so user identity and role are simulated via headers:
+    - X-User-Id: represents the current user
+    - X-User-Role: represents the user's role (e.g. 'staff', 'manager')
+    Only basic validation is performed (e.g. user_id > 0, valid role).
+    In a real system, user identity would be verified against an
+    authentication service or database.
+    """
+    # Basic validation (optional but good practice)
+    if x_user_role not in ["staff", "manager"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user role"
+        )
+    # Validate user_id (mock check)
+    if x_user_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user id"
+        )
+    return {
+        "user_id": x_user_id,
+        "role": x_user_role,
+    }
+app = FastAPI(dependencies=[Depends(get_current_user)])
 api_router = APIRouter(prefix="/v1")
 
 def get_db():
@@ -39,6 +66,7 @@ def require_creator_or_manager(request: Request, invoice):
             status_code=403,
             detail="Only the creator or a manager can perform this action"
         )
+
 @api_router.post("/clients")
 def create_client_api(data: ClientCreate, db: Session = Depends(get_db)):
     client = create_client(db, data)
@@ -122,6 +150,7 @@ def to_invoice_response(invoice):
         adjustment_total=invoice.adjustment_total,
         credit_total=invoice.credit_total,
         total_amount=invoice.total_amount,
+        created_by=invoice.created_by,
     )
 @api_router.post("/invoices")
 def create_invoice_api(data: InvoiceCreate, request: Request,db: Session = Depends(get_db)):
@@ -140,14 +169,6 @@ def list_invoices(db: Session = Depends(get_db)):
         message="Invoices retrieved successfully",
         data=[to_invoice_response(invoice) for invoice in invoices],
     )
-@api_router.get("/invoices/{invoice_id}")
-def get_invoice_api(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = get_invoice_by_id(db, invoice_id)
-    return APIResponse(
-        status="success",
-        message="Invoice retrieved successfully",
-        data=to_invoice_response(invoice)
-    )
 @api_router.get("/invoices/pending-approval")
 def get_pending_approval_api(request: Request, db: Session = Depends(get_db)):
     # Only managers can view pending approval invoices
@@ -157,6 +178,14 @@ def get_pending_approval_api(request: Request, db: Session = Depends(get_db)):
         status="success",
         message="Pending approval invoices retrieved",
         data=[to_invoice_response(invoice) for invoice in invoices],
+    )
+@api_router.get("/invoices/{invoice_id}")
+def get_invoice_api(invoice_id: int, db: Session = Depends(get_db)):
+    invoice = get_invoice_by_id(db, invoice_id)
+    return APIResponse(
+        status="success",
+        message="Invoice retrieved successfully",
+        data=to_invoice_response(invoice)
     )
 @api_router.patch("/invoices/{invoice_id}")
 def update_invoice_api(invoice_id: int, data: InvoiceUpdate, request: Request, db: Session = Depends(get_db)):
@@ -257,12 +286,7 @@ def get_outstanding_report_api(db: Session = Depends(get_db)):
     return APIResponse(
         status="success",
         message="Outstanding report retrieved successfully",
-        data={
-            "total_outstanding": report["total_outstanding"],
-            "invoices": [
-                to_invoice_response(invoice) for invoice in report["invoices"]
-            ],
-        },
+        data=report,
     )
 @api_router.get("/reports/billing-history")
 def get_billing_history_report_api(db: Session = Depends(get_db)):
