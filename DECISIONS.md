@@ -1,4 +1,6 @@
 # Design Notes
+The system is designed with a focus on simplicity, correctness, and clear workflow control.
+Complex features are intentionally deferred to keep the core system maintainable and extensible.
 ---
 ## Questions for the Client
 ### Invoice Lifecycle
@@ -47,9 +49,10 @@
 ---
 ## Production Considerations
 - Add proper login and permissions (e.g. JWT authentication and role management).
-- Use a production database (e.g. PostgreSQL) instead of SQLite.
+- Use a production database (e.g. PostgreSQL or DanamoDB) instead of SQLite.
 - Ensure invoice amounts are calculated correctly and prevent invalid workflow actions.
 - Support partial payments and track remaining balances accurately.
 - Store invoice files using object storage (e.g. S3), with cold storage (e.g. Glacier) for infrequent access.
 - Add audit logging and centralised logging for traceability and monitoring.
 - Set up deployment and automate build/release (CI/CD), choosing infrastructure based on scale and budget.
+- Manage sensitive configuration securely using environment variables and secrets management (e.g. AWS Secrets Manager).
