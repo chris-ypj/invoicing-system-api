@@ -67,7 +67,16 @@ X-User-Id: 2
 X-User-Role: manager
 ```
 Default values are provided for easier local testing.
+## Project Structure
+app/
+  main.py            # API routes (FastAPI entry point)
+  models/            # Database models
+  schemas/           # Request and response schemas
+  services/          # Business logic and workflow rules
+  database.py        # Database connection and session
 
+README.md            # Project overview and setup instructions
+DECISIONS.md         # Design decisions and assumptions
 ---
 ## API Overview
 ### Clients
