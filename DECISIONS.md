@@ -53,6 +53,6 @@ Complex features are intentionally deferred to keep the core system maintainable
 - Ensure invoice amounts are calculated correctly and prevent invalid workflow actions.
 - Support partial payments and track remaining balances accurately.
 - Store invoice files using object storage (e.g. S3), with cold storage (e.g. Glacier) for infrequent access.
-- Add audit logging and centralised logging for traceability and monitoring.
+- Add approval history, audit logging, and centralised system logging for traceability, monitoring, and workflow transparency.
 - Set up deployment and automate build/release (CI/CD), choosing infrastructure based on scale and budget.
 - Manage sensitive configuration securely using environment variables and secrets management (e.g. AWS Secrets Manager).
